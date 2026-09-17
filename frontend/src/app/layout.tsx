@@ -1,14 +1,49 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
-import "./globals.css";
+import "@/app/globals.css";
 import { ThemeProvider } from "@/lib/theme";
 import { I18nProvider } from "@/lib/i18n";
+import { SWRegister } from "@/lib/sw";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 
 export const metadata: Metadata = {
   title: "MedTracker",
   description: "Smart Medicine Management for Your Home",
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"),
+  icons: {
+    icon: "/icon-192x192.png",
+    apple: "/icon-512x512.png",
+  },
+  manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "MedTracker",
+  },
+  openGraph: {
+    type: "website",
+    locale: "id_ID",
+    url: "/",
+    title: "MedTracker",
+    description: "Smart Medicine Management for Your Home",
+    images: [
+      {
+        url: "/icon-512x512.png",
+        width: 512,
+        height: 512,
+        alt: "MedTracker",
+      },
+    ],
+  },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#0f172a",
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
@@ -18,6 +53,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <ThemeProvider>
           <I18nProvider>
             {children}
+            <SWRegister />
           </I18nProvider>
         </ThemeProvider>
       </body>
