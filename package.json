@@ -1,0 +1,11 @@
+{
+  "dependencies": {
+    "lucide-react": "^1.47.0"
+  },
+  "devDependencies": {
+    "prisma": "^8.0.0-rc.15"
+  },
+  "scripts": {
+    "postinstall": "prisma skills sync || exit 0"
+  }
+}
