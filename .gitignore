@@ -1,6 +1,11 @@
 # Dependencies
 node_modules/
 jspm_packages/
+.agents/
+.claude/
+.cursor/
+.devin/
+prisma.config.ts
 
 # Build outputs
 .next/
@@ -18,6 +23,7 @@ vibe/
 .env.development.local
 .env.test.local
 .env.production.local
+
 
 # Logs
 npm-debug.log*
