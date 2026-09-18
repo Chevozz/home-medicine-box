@@ -17,7 +17,7 @@ export default function Dashboard() {
   const load = async () => {
     // Fetch each endpoint independently so one failure doesn't blank the others.
     try {
-      const { data } = await api.get("/medicines");
+      const { data } = await api.get("/api/medicines");
       setMedicines(Array.isArray(data) ? data : []);
     } catch (err) {
       console.error("Failed to load medicines:", err);
@@ -25,7 +25,7 @@ export default function Dashboard() {
     }
 
     try {
-      const { data } = await api.get("/schedules");
+      const { data } = await api.get("/api/schedules");
       setSchedules(Array.isArray(data) ? data : []);
     } catch (err) {
       console.error("Failed to load schedules:", err);
@@ -33,7 +33,7 @@ export default function Dashboard() {
     }
 
     try {
-      const { data } = await api.get("/logs");
+      const { data } = await api.get("/api/logs");
       setLogs(Array.isArray(data) ? data : []);
     } catch (err) {
       console.error("Failed to load logs:", err);
@@ -45,7 +45,7 @@ export default function Dashboard() {
 
   const recordTaken = async (medicineId: string) => {
     try {
-      await api.post("/logs", { medicine_id: medicineId, status: "Taken" });
+      await api.post("/api/logs", { medicine_id: medicineId, status: "Taken" });
       load();
     } catch (err) {
       console.error("Gagal mencatat konsumsi:", err);

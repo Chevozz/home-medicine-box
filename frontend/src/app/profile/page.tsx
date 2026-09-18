@@ -14,14 +14,14 @@ export default function ProfilePage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    api.get("/auth/me").then(({ data }) => { setUser(data); setName(data.name); setLoading(false); }).catch(() => setLoading(false));
+    api.get("/api/auth/me").then(({ data }) => { setUser(data); setName(data.name); setLoading(false); }).catch(() => setLoading(false));
   }, []);
 
   const save = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
     try {
-      await api.patch("/auth/me", { name });
+      await api.patch("/api/auth/me", { name });
       setUser({ ...user!, name });
     } catch (err: any) {
       setError(err.response?.data?.error || t.error);

@@ -17,8 +17,8 @@ export default function HistoryPage() {
     setLoading(true);
     try {
       const [logsRes, medsRes] = await Promise.all([
-        api.get(`/logs${mid ? `?medicine_id=${mid}` : ""}`),
-        api.get("/medicines")
+        api.get(`/api/logs${mid ? `?medicine_id=${mid}` : ""}`),
+        api.get("/api/medicines")
       ]);
       setLogs(logsRes.data);
       setAllMedicines(medsRes.data);
@@ -30,7 +30,7 @@ export default function HistoryPage() {
 
   const record = async (mid: string, status: "Taken" | "Missed") => {
     try {
-      await api.post("/logs", { medicine_id: mid, status });
+      await api.post("/api/logs", { medicine_id: mid, status });
       load(filterMedicineId);
     } catch (err) {
       console.error("Gagal mencatat:", err);

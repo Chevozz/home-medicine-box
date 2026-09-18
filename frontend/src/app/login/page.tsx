@@ -35,7 +35,7 @@ export default function LoginPage() {
     e.preventDefault();
     setResetMessage("");
     try {
-      await api.post("/auth/forgot-password", { email: resetEmail });
+      await api.post("/api/auth/forgot-password", { email: resetEmail });
       setResetMessage(t.resetPasswordSent);
       setShowForgotModal(false);
     } catch (err: any) {

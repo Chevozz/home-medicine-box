@@ -20,6 +20,17 @@ function getUserIdFromRequest(request: Request): string | null {
   }
 }
 
+// Helper: derive default daily times from a dosage string like "3x sehari".
+// Falls back to a single morning slot when the frequency is unknown.
+const DEFAULT_TIMES = ["08:00", "14:00", "20:00", "18:00"];
+
+function parseDosageTimes(dosage: string): string[] {
+  const match = dosage.match(/(\d+)\s*x/i);
+  const count = match ? parseInt(match[1], 10) : 1;
+  if (count <= 0) return [DEFAULT_TIMES[0]];
+  return DEFAULT_TIMES.slice(0, Math.min(count, DEFAULT_TIMES.length));
+}
+
 // GET: List all medicines
 export async function GET(request: Request) {
   const userId = getUserIdFromRequest(request);
@@ -93,6 +104,19 @@ export async function POST(request: Request) {
         stock_quantity,
         expiry_date: expiry,
       },
+    });
+
+    // Auto-create default daily schedule(s) from dosage_instructions so the
+    // dashboard "Jadwal Hari Ini" list is populated as soon as a medicine is
+    // added. ponytail: heuristic on the leading "Nx" — upgrade to explicit
+    // schedule form if users need custom times.
+    const times = parseDosageTimes(body.dosage_instructions ?? "");
+    await prisma.schedule.createMany({
+      data: times.map((time_to_take) => ({
+        medicine_id: newMedicine.id,
+        time_to_take,
+        frequency: "Daily",
+      })),
     });
 
     return NextResponse.json(newMedicine, { status: 201 });
