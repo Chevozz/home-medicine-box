@@ -4,11 +4,9 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "prisma generate && next build",
+    "build": "npx --package=prisma@latest prisma generate && next build",
     "start": "next start",
-    "lint": "next lint",
-    "db:generate": "prisma generate",
-    "db:push": "npx prisma db push"
+    "lint": "next lint"
   },
   "dependencies": {
     "@prisma/client": "^7.10.0",
