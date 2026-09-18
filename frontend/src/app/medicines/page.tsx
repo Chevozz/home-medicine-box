@@ -22,14 +22,20 @@ export default function MedicinesPage() {
   });
 
   const load = async () => {
-    const { data } = await api.get("/medicines");
-    setMedicines(data);
-    setLoading(false);
+    try {
+      const { data } = await api.get("/api/medicines");
+      setMedicines(Array.isArray(data) ? data : []);
+    } catch (err) {
+      console.error("Failed to load medicines:", err);
+      setMedicines([]);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const remove = async (id: string) => {
     if (!window.confirm(t.confirm)) return;
-    await api.delete(`/medicines/${id}`);
+    await api.delete(`/api/medicines/${id}`);
     load();
   };
 
@@ -49,7 +55,7 @@ export default function MedicinesPage() {
     e.preventDefault();
     if (!editingMedicine) return;
     try {
-      await api.put(`/medicines/${editingMedicine.id}`, {
+      await api.put(`/api/medicines/${editingMedicine.id}`, {
         name: formData.name,
         type: formData.type,
         dosage_instructions: formData.dosage_instructions,
@@ -173,7 +179,6 @@ export default function MedicinesPage() {
                 <select required value={formData.type} onChange={(e) => setFormData({ ...formData, type: e.target.value })} className="input-field">
                   <option value="">{t.typePlaceholder}</option>
                   <option value={t.capsule}>{t.capsule}</option>
-                  <option value={t.syrup}>{t.syrup}</option>
                   <option value={t.tablet}>{t.tablet}</option>
                   <option value={t.ointment}>{t.ointment}</option>
                   <option value={t.inhaler}>{t.inhaler}</option>
