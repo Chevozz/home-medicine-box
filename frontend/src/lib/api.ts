@@ -1,20 +1,27 @@
+"use client";
 import axios from "axios";
 
+// Ponytail: base URL empty string means same-origin (Next.js API routes now
+// live inside the same frontend app — frontend + backend unified on Vercel).
 const api = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000/api",
+  baseURL: "",
   headers: { "Content-Type": "application/json" },
 });
 
+// Attach token to every request
 api.interceptors.request.use((config) => {
-  const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
-  if (token) config.headers.Authorization = `Bearer ${token}`;
+  if (typeof window !== "undefined") {
+    const token = localStorage.getItem("token");
+    if (token) config.headers.Authorization = `Bearer ${token}`;
+  }
   return config;
 });
 
+// Auto-logout on 401
 api.interceptors.response.use(
-  (response) => response,
+  (res) => res,
   (error) => {
-    if (error.response?.status === 401) {
+    if (typeof window !== "undefined" && error.response?.status === 401) {
       localStorage.removeItem("token");
       window.location.href = "/login";
     }

@@ -1,0 +1,59 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id            String           @id @default(uuid())
+  name          String
+  email         String           @unique
+  password_hash String
+  created_at    DateTime         @default(now())
+  updated_at    DateTime         @updatedAt
+  medicines     Medicine[]
+  logs          ConsumptionLog[]
+}
+
+model Medicine {
+  id                  String           @id @default(uuid())
+  user_id             String
+  name                String
+  type                String           // Kapsul, Sirup, Tablet, Salep, dll.
+  dosage_instructions String           // Contoh: "3x sehari sesudah makan"
+  stock_quantity      Int
+  expiry_date         DateTime
+  created_at          DateTime         @default(now())
+  updated_at          DateTime         @updatedAt
+
+  user                User             @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  schedules           Schedule[]
+  logs                ConsumptionLog[]
+}
+
+model Schedule {
+  id           String   @id @default(uuid())
+  medicine_id  String
+  time_to_take String   // Format HH:mm (contoh: "08:00")
+  frequency    String   // Daily, Weekly, dll
+  created_at   DateTime @default(now())
+  updated_at   DateTime @updatedAt
+
+  medicine Medicine @relation(fields: [medicine_id], references: [id], onDelete: Cascade)
+}
+
+model ConsumptionLog {
+  id          String   @id @default(uuid())
+  user_id     String
+  medicine_id String
+  consumed_at DateTime @default(now())
+  status      String   // "Taken", "Missed"
+  created_at  DateTime @default(now())
+
+  user     User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  medicine Medicine @relation(fields: [medicine_id], references: [id], onDelete: Cascade)
+}

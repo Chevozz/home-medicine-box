@@ -20,7 +20,7 @@ export default function RegisterPage() {
     e.preventDefault();
     setError("");
     try {
-      const { token } = (await api.post("/auth/register", { name, email, password })).data;
+      const { token } = (await api.post("/api/auth/signup", { name, email, password })).data;
       localStorage.setItem("token", token);
       router.push("/dashboard");
       router.refresh();

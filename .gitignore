@@ -16,14 +16,15 @@ dist/
 #vibe
 vibe/
 
-# Environment files (local dev configs)
+# Environment files (local dev configs) - CRITICAL for security
 .env
 .env.local
 .env.*.local
 .env.development.local
 .env.test.local
 .env.production.local
-
+.env.secrets
+.env.staging
 
 # Logs
 npm-debug.log*
@@ -56,7 +57,6 @@ Thumbs.db
 *.sql
 docker-compose.override.yml
 docker-compose.yml
-package-lock.json
 
 # Testing
 coverage/
@@ -72,3 +72,19 @@ temp/
 
 # Docker
 .docker/
+
+# Prisma (local schema & migrations)
+prisma/migrations/
+prisma/*.db
+prisma/*.db-journal
+frontend/prisma/migrations/
+frontend/prisma/*.db
+frontend/prisma/*.db-journal
+
+# Lock files (optional: remove if you want to commit them)
+package-lock.json
+pnpm-lock.yaml
+yarn.lock
+
+# Vercel
+.vercel/

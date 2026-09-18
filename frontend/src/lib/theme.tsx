@@ -11,14 +11,20 @@ interface ThemeContextType {
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
-  const [theme, setTheme] = useState<Theme>(() => {
-    if (typeof window !== "undefined") {
-      const saved = localStorage.getItem("theme") as Theme;
-      if (saved === "light" || saved === "dark") return saved;
-      if (window.matchMedia("(prefers-color-scheme: dark)").matches) return "dark";
-    }
-    return "light";
-  });
+  // ponytail: initial state must be identical on server and client to avoid
+  // hydration mismatch (#418). localStorage/matchMedia are read in an effect
+  // after hydration, not in the useState initializer.
+  const [theme, setTheme] = useState<Theme>("light");
+
+  useEffect(() => {
+    const root = window.document.documentElement;
+    const saved = localStorage.getItem("theme") as Theme;
+    const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+    const initial = saved === "light" || saved === "dark" ? saved : prefersDark ? "dark" : "light";
+    root.classList.remove("light", "dark");
+    root.classList.add(initial);
+    setTheme(initial);
+  }, []);
 
   useEffect(() => {
     const root = window.document.documentElement;

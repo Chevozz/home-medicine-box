@@ -22,7 +22,7 @@ export default function LoginPage() {
     e.preventDefault();
     setError("");
     try {
-      const { token } = (await api.post("/auth/login", { email, password })).data;
+      const { token } = (await api.post("/api/auth/login", { email, password })).data;
       localStorage.setItem("token", token);
       router.push("/dashboard");
       router.refresh();

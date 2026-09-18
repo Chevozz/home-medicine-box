@@ -297,13 +297,15 @@ interface I18nContextType {
 const I18nContext = createContext<I18nContextType | undefined>(undefined);
 
 export function I18nProvider({ children }: { children: ReactNode }) {
-  const [language, setLanguage] = useState<Language>(() => {
-    if (typeof window !== "undefined") {
-      const saved = localStorage.getItem("language") as Language;
-      if (saved === "id" || saved === "en") return saved;
-    }
-    return "id";
-  });
+  // ponytail: initial state must be identical on server and client to avoid
+  // hydration mismatch (#418). localStorage is read in an effect after
+  // hydration, not in the useState initializer.
+  const [language, setLanguage] = useState<Language>("id");
+
+  useEffect(() => {
+    const saved = localStorage.getItem("language") as Language;
+    if (saved === "id" || saved === "en") setLanguage(saved);
+  }, []);
 
   useEffect(() => {
     localStorage.setItem("language", language);
