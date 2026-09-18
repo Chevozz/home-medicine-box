@@ -122,8 +122,13 @@ export async function POST(request: Request) {
         },
       });
 
-      // 2. If status is "Taken", decrement stock_quantity atomically
+      // 2. If status is "Taken", decrement stock_quantity atomically (but prevent negative stock)
       if (status === "Taken") {
+        const currentMedicine = await tx.medicine.findUnique({ where: { id: medicine_id } });
+        if (!currentMedicine || currentMedicine.stock_quantity <= 0) {
+          // Throw error to rollback transaction - stock is 0 or medicine not found
+          throw new Error("STOCK_EMPTY");
+        }
         const updatedMedicine = await tx.medicine.update({
           where: { id: medicine_id },
           data: {
@@ -150,9 +155,18 @@ export async function POST(request: Request) {
   } catch (error: any) {
     console.error("[Route Handler] POST /api/logs error:", error);
     console.error("[Route Handler] Stack trace:", error.stack);
+
+    // Handle specific stock empty error
+    if (error.message === "STOCK_EMPTY") {
+      return NextResponse.json(
+        { error: "Stok obat habis. Tidak bisa mencatat sebagai diminum." },
+        { status: 400, headers: { "Cache-Control": "no-store, max-age=0, must-revalidate" } }
+      );
+    }
+
     return NextResponse.json(
       { error: error.message || "Failed to record consumption log" },
-      { status: 500 }
+      { status: 500, headers: { "Cache-Control": "no-store, max-age=0, must-revalidate" } }
     );
   }
 }

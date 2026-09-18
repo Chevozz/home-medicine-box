@@ -86,7 +86,7 @@ export default function HistoryPage() {
 
   return (
     <ResponsiveNav title="MedTracker">
-      <main className="flex-1 p-4 md:p-6 space-y-5">
+      <main className="flex-1 p-2 sm:p-4 md:p-6 space-y-3 sm:space-y-5">
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
           <div className="space-y-1">

@@ -82,8 +82,8 @@ export default function AddMedicinePage() {
 
   return (
     <ResponsiveNav title={t.addMedicineTitle}>
-      <main className="flex items-center justify-center min-h-[calc(100vh-4rem)] sm:min-h-screen p-3 sm:p-4 md:p-6">
-        <form onSubmit={submit} className="w-full max-w-lg bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-4 md:p-6 space-y-4 md:space-y-5 shadow-sm">
+      <main className="flex-1 p-2 sm:p-4 md:p-6 flex flex-col items-center justify-start min-h-0">
+        <form onSubmit={submit} className="w-full max-w-lg bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-4 sm:p-5 md:p-6 space-y-3 sm:space-y-4 md:space-y-5 shadow-sm">
           <h1 className="text-lg md:text-xl font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
             <Plus size={20} className="text-emerald-600 dark:text-emerald-400" /> {t.addMedicineTitle}
           </h1>

@@ -22,6 +22,8 @@ export default function RegisterPage() {
     try {
       const { token } = (await api.post("/api/auth/signup", { name, email, password })).data;
       localStorage.setItem("token", token);
+      // Set cookie for middleware to read
+      document.cookie = `token=${token}; path=/; max-age=604800; samesite=lax`; // 7 days
       router.push("/dashboard");
       router.refresh();
     } catch (err: any) {

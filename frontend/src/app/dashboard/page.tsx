@@ -46,6 +46,15 @@ export default function Dashboard() {
       return;
     }
 
+    // Check if stock is available before taking
+    if (status === "Taken") {
+      const medicine = medicines.find(m => m.id === medicineId);
+      if (medicine && medicine.stock_quantity <= 0) {
+        alert("Stok obat habis. Tidak bisa mencatat sebagai diminum.");
+        return;
+      }
+    }
+
     try {
       const response = await api.post("/api/logs", {
         medicine_id: medicineId,
@@ -77,9 +86,21 @@ export default function Dashboard() {
 
   const today = new Date();
   const critical = medicines.filter((m) => m.stock_quantity <= 2);
+
+  // Filter expired medicines (expiry_date < today)
+  const expired = medicines.filter((m) => {
+    const expiresAt = new Date(m.expiry_date);
+    const todayNoTime = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    return expiresAt.getTime() < todayNoTime.getTime();
+  });
+
+  // Filter expiring soon (0-30 days remaining, not expired)
   const expiring = medicines.filter((m) => {
-    const diff = new Date(m.expiry_date).getTime() - today.getTime();
-    return diff >= 0 && diff <= 30 * 86400000;
+    const expiresAt = new Date(m.expiry_date);
+    const todayNoTime = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    const diff = expiresAt.getTime() - todayNoTime.getTime();
+    const days = Math.ceil(diff / 86400000);
+    return days >= 0 && days <= 30;
   });
 
   const formatExpiryDate = (dateStr: string) => {
@@ -87,9 +108,13 @@ export default function Dashboard() {
     return date.toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" });
   };
 
-  const daysUntilExpiry = (dateStr: string) => {
-    const diff = new Date(dateStr).getTime() - today.getTime();
-    return Math.ceil(diff / 86400000);
+  const daysUntilExpiry = (dateStr: string): number => {
+    const expiresAt = new Date(dateStr);
+    const diff = expiresAt.getTime() - today.getTime();
+    const days = Math.ceil(diff / 86400000);
+    // If expired (negative days), return 0 to indicate expired
+    // The display logic will show "Kedaluwarsa" when days < 0
+    return days < 0 ? 0 : days;
   };
 
   // Filter today's schedules - show schedules for hours 06:00 to 22:00
@@ -102,7 +127,7 @@ export default function Dashboard() {
 
   return (
     <ResponsiveNav title="MedTracker">
-      <main className="flex-1 p-4 md:p-6 space-y-6">
+      <main className="flex-1 p-2 sm:p-4 md:p-6 space-y-3 sm:space-y-5">
         {/* Stats Cards */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {[
@@ -110,6 +135,7 @@ export default function Dashboard() {
             { label: t.todaySchedule, value: todaysSchedule.length, bg: "bg-white dark:bg-slate-900", tone: "text-slate-900 dark:text-slate-100", icon: Clock },
             { label: t.criticalStock, value: critical.length, bg: critical.length ? "bg-rose-50 dark:bg-rose-900/20" : "bg-white dark:bg-slate-900", tone: critical.length ? "text-rose-700 dark:text-rose-300" : "text-slate-900 dark:text-slate-100", icon: AlertTriangle },
             { label: t.nearExpiry, value: expiring.length, bg: expiring.length ? "bg-amber-50 dark:bg-amber-900/20" : "bg-white dark:bg-slate-900", tone: expiring.length ? "text-amber-700 dark:text-amber-300" : "text-slate-900 dark:text-slate-100", icon: Clock },
+            { label: t.expired, value: expired.length, bg: expired.length ? "bg-rose-50 dark:bg-rose-900/20" : "bg-white dark:bg-slate-900", tone: expired.length ? "text-rose-700 dark:text-rose-300" : "text-slate-900 dark:text-slate-100", icon: AlertTriangle },
           ].map((card) => {
             const Icon = card.icon;
             return (
@@ -123,6 +149,31 @@ export default function Dashboard() {
             );
           })}
         </div>
+
+        {/* Expired Medicines Alert */}
+        {expired.length > 0 && (
+          <div className="space-y-3">
+            {expired.map((m) => {
+              const days = daysUntilExpiry(m.expiry_date);
+              return (
+                <div key={m.id} className="bg-rose-50 dark:bg-rose-900/20 border border-rose-200 dark:border-rose-800 rounded-2xl p-4 flex items-center justify-between">
+                  <div className="flex items-center gap-3 overflow-hidden">
+                    <div className="p-2 bg-rose-100 dark:bg-rose-900/30 rounded-xl text-rose-600 dark:text-rose-400">
+                      <AlertTriangle size={20} />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="font-semibold text-rose-800 dark:text-rose-200">{t.expired}</p>
+                      <p className="text-sm text-rose-600 dark:text-rose-400 truncate">{m.name} — {formatExpiryDate(m.expiry_date)}</p>
+                    </div>
+                  </div>
+                  <Link href="/medicines" className="text-rose-700 dark:text-rose-300 hover:underline text-sm font-medium flex items-center gap-1">
+                    Detail <ArrowRight size={14} />
+                  </Link>
+                </div>
+              );
+            })}
+          </div>
+        )}
 
         {/* Alerts */}
         {(critical.length > 0 || expiring.length > 0) && (

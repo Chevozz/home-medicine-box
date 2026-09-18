@@ -24,6 +24,8 @@ export default function LoginPage() {
     try {
       const { token } = (await api.post("/api/auth/login", { email, password })).data;
       localStorage.setItem("token", token);
+      // Set cookie for middleware to read
+      document.cookie = `token=${token}; path=/; max-age=604800; samesite=lax`; // 7 days
       router.push("/dashboard");
       router.refresh();
     } catch (err: any) {

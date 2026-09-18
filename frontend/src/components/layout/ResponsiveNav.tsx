@@ -6,6 +6,7 @@ import type { ReactNode } from "react";
 import { Home, Pill, History, LogOut, Sun, Moon, Languages } from "lucide-react";
 import { useTheme } from "@/lib/theme";
 import { useTranslation } from "@/lib/i18n";
+import { logout as doLogout } from "@/lib/api";
 
 export default function ResponsiveNav({ title, children }: { title?: string; children: ReactNode }) {
   const pathname = usePathname();
@@ -20,8 +21,7 @@ export default function ResponsiveNav({ title, children }: { title?: string; chi
   const isActive = (path: string) => pathname === path;
 
   const logout = () => {
-    localStorage.removeItem("token");
-    window.location.href = "/login";
+    doLogout();
   };
 
   // Close language menu when clicking outside either the desktop or mobile menu.

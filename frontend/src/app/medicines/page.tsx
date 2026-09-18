@@ -195,7 +195,7 @@ export default function MedicinesPage() {
 
   return (
     <ResponsiveNav title="MedTracker">
-      <main className="flex-1 p-4 md:p-6 space-y-6">
+      <main className="flex-1 p-2 sm:p-4 md:p-6 space-y-4 sm:space-y-6">
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
           <div className="space-y-1">
@@ -218,7 +218,7 @@ export default function MedicinesPage() {
             </Link>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
             {medicines.map((m) => {
               const expiry = getExpiryStatus(m.expiry_date);
               const stock = getStockStatus(m.stock_quantity);
