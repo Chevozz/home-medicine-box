@@ -15,13 +15,18 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
 
   const load = async () => {
-    const [m, s, l] = await Promise.all([
-      api.get("/api/medicines").then((r) => r.data),
-      api.get("/api/schedules").then((r) => r.data),
-      api.get("/api/logs").then((r) => r.data),
-    ]);
-    setMedicines(m); setSchedules(s); setLogs(l);
-    setLoading(false);
+    try {
+      const [m, s, l] = await Promise.all([
+        api.get("/medicines").then((r) => r.data),
+        api.get("/schedules").then((r) => r.data),
+        api.get("/logs").then((r) => r.data),
+      ]);
+      setMedicines(m); setSchedules(s); setLogs(l);
+    } catch (err) {
+      console.error("Dashboard load error:", err);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const recordTaken = async (medicineId: string) => {
