@@ -5,7 +5,7 @@ import { AlertTriangle, Clock, Pill, Package, Plus, ArrowRight, History as Histo
 import ResponsiveNav from "@/components/layout/ResponsiveNav";
 import api from "@/lib/api";
 import { useTranslation } from "@/lib/i18n";
-import type { Medicine, Schedule, ConsumptionLog } from "@/types";
+import type { Medicine, Schedule } from "@/types";
 
 export default function Dashboard() {
   const { t } = useTranslation();
@@ -37,12 +37,21 @@ export default function Dashboard() {
   const recordConsumption = async (scheduleId: string, medicineId: string, status: "Taken" | "Missed") => {
     console.log(`Recording consumption: scheduleId=${scheduleId}, medicineId=${medicineId}, status=${status}`);  // Debug log
 
+    // Safety check
+    if (!scheduleId || !medicineId) {
+      console.error("Missing IDs:", { scheduleId, medicineId });
+      alert("Data jadwal tidak lengkap. Silakan refresh halaman.");
+      return;
+    }
+
     try {
-      await api.post("/api/logs", {
+      const response = await api.post("/api/logs", {
         medicine_id: medicineId,
         status: status,
         schedule_id: scheduleId,
       });
+      console.log("API response:", response.data);  // Debug log
+
       // Optimistic update: remove from schedules list immediately for responsive UI
       setSchedules((prev) => {
         const filtered = prev.filter((s) => s.id !== scheduleId);
@@ -52,7 +61,9 @@ export default function Dashboard() {
     } catch (err: any) {
       console.error("Gagal mencatat konsumsi:", err);
       console.error("Error response:", err.response?.data);  // Debug log
-      alert(err.response?.data?.error || "Gagal mencatat konsumsi. Silakan coba lagi.");
+      // Show specific error from backend
+      const errorMsg = err.response?.data?.error || err.response?.data?.details?.[0]?.message || "Gagal mencatat konsumsi. Silakan coba lagi.";
+      alert(errorMsg);
     }
   };
 
