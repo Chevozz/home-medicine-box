@@ -1,9 +1,10 @@
 // POST /api/auth/forgot-password
-// Request password reset - generates token and sends email
+// Request password reset - generates token and sends email via Gmail SMTP
 
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import crypto from "crypto";
+import nodemailer from "nodemailer";
 
 export const dynamic = "force-dynamic";
 
@@ -66,24 +67,32 @@ export async function POST(request: Request) {
 }
 
 async function sendResetEmail(email: string, resetUrl: string) {
-  // Using Resend (recommended for Vercel)
-  // Install: npm install resend
-  // Set RESEND_API_KEY in Vercel env vars
-  const apiKey = process.env.RESEND_API_KEY;
+  const emailUser = process.env.EMAIL_USER;
+  const emailPass = process.env.EMAIL_PASS;
 
-  if (!apiKey) {
-    console.warn("RESEND_API_KEY not configured. Skipping email send.");
+  if (!emailUser || !emailPass) {
+    console.warn("EMAIL_USER or EMAIL_PASS not configured. Skipping email send.");
     // Fallback: log reset URL for development
     console.log("DEV MODE - Reset URL:", resetUrl);
     return;
   }
 
   try {
-    const { Resend } = await import("resend");
-    const resend = new Resend(apiKey);
+    // Create transporter using Gmail SMTP
+    const transporter = nodemailer.createTransport({
+      service: "gmail",
+      auth: {
+        user: emailUser,
+        pass: emailPass,
+      },
+    });
 
-    await resend.emails.send({
-      from: "MedTracker <noreply@yourdomain.com>",
+    // Verify connection (optional but good for debugging)
+    await transporter.verify();
+    console.log("SMTP connection verified");
+
+    await transporter.sendMail({
+      from: `"MedTracker" <${emailUser}>`,
       to: email,
       subject: "Reset Password MedTracker",
       html: `

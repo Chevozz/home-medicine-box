@@ -28,8 +28,20 @@ self.addEventListener('activate', (e) => {
   );
 });
 
-// Fetch event - cache-first with network fallback
+// Fetch event - ONLY cache GET requests, skip POST/PUT/DELETE and chrome-extension
 self.addEventListener('fetch', (e) => {
+  const url = new URL(e.request.url);
+
+  // Skip chrome-extension requests
+  if (url.protocol === 'chrome-extension:') {
+    return;
+  }
+
+  // Only cache GET requests - skip POST, PUT, DELETE, etc.
+  if (e.request.method !== 'GET') {
+    return;
+  }
+
   e.respondWith(
     caches.match(e.request).then((cached) => {
       if (cached) return cached;

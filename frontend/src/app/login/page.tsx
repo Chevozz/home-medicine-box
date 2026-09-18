@@ -103,7 +103,7 @@ export default function LoginPage() {
           <div className="flex items-center gap-2">
             <button
               type="button"
-              onClick={() => setShowForgotModal(true)}
+              onClick={(e) => { e.preventDefault(); setShowForgotModal(true); }}
               className="text-sm text-emerald-600 dark:text-emerald-400 hover:underline"
             >
               {t.forgotPassword}
