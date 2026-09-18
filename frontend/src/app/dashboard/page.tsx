@@ -16,9 +16,9 @@ export default function Dashboard() {
 
   const load = async () => {
     const [m, s, l] = await Promise.all([
-      api.get("/medicines").then((r) => r.data),
-      api.get("/schedules").then((r) => r.data),
-      api.get("/logs").then((r) => r.data),
+      api.get("/api/medicines").then((r) => r.data),
+      api.get("/api/schedules").then((r) => r.data),
+      api.get("/api/logs").then((r) => r.data),
     ]);
     setMedicines(m); setSchedules(s); setLogs(l);
     setLoading(false);
