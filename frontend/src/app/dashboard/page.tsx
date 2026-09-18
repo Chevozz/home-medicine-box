@@ -8,11 +8,19 @@ import api from "@/lib/api";
 import { useTranslation } from "@/lib/i18n";
 import type { Medicine, Schedule } from "@/types";
 
+interface DashboardData {
+  totalMedicines: number;
+  criticalStock: number;
+  nearExpiry: number;
+  todaySchedules: Schedule[];
+  todayScheduleCount: number;
+}
+
 export default function Dashboard() {
   const { t } = useTranslation();
   const router = useRouter();
   const [medicines, setMedicines] = useState<Medicine[]>([]);
-  const [schedules, setSchedules] = useState<Schedule[]>([]);
+  const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
 
   const load = async () => {
@@ -25,12 +33,12 @@ export default function Dashboard() {
     }
 
     try {
-      const { data } = await api.get("/api/schedules");
-      console.log("Loaded schedules:", data);  // Debug log
-      setSchedules(Array.isArray(data) ? data : []);
+      const { data } = await api.get("/api/dashboard");
+      console.log("Loaded dashboard:", data);  // Debug log
+      setDashboardData(data as DashboardData);
     } catch (err) {
-      console.error("Failed to load schedules:", err);
-      setSchedules([]);
+      console.error("Failed to load dashboard:", err);
+      setDashboardData(null);
     }
 
     setLoading(false);
@@ -63,11 +71,14 @@ export default function Dashboard() {
       });
       console.log("API response:", response.data);  // Debug log
 
-      // Optimistic update: remove from schedules list immediately for responsive UI
-      setSchedules((prev) => {
-        const filtered = prev.filter((s) => s.id !== scheduleId);
-        console.log(`Removed schedule ${scheduleId}, remaining: ${filtered.length}`);  // Debug log
-        return filtered;
+      // Optimistic update: remove from dashboard data immediately for responsive UI
+      setDashboardData((prev) => {
+        if (!prev) return prev;
+        return {
+          ...prev,
+          todaySchedules: prev.todaySchedules.filter((s) => s.id !== scheduleId),
+          todayScheduleCount: prev.todayScheduleCount - 1,
+        };
       });
 
       // Force router cache refresh so dashboard stats, stock, and history
@@ -117,11 +128,8 @@ export default function Dashboard() {
     return days < 0 ? 0 : days;
   };
 
-  // Filter today's schedules - show schedules for hours 06:00 to 22:00
-  const todaysSchedule = schedules.filter((s) => {
-    const h = parseInt(s.time_to_take.slice(0, 2), 10);
-    return h >= 6 && h <= 22;
-  });
+  // Dashboard API already filters out taken schedules for today
+  const todaysSchedule = dashboardData?.todaySchedules || [];
 
   if (loading) return <main className="flex items-center justify-center h-64"><div className="animate-pulse text-slate-400">{t.loading}</div></main>;
 
@@ -132,7 +140,7 @@ export default function Dashboard() {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {[
             { label: t.totalMedicines, value: medicines.length, bg: "bg-white dark:bg-slate-900", tone: "text-slate-900 dark:text-slate-100", icon: Package },
-            { label: t.todaySchedule, value: todaysSchedule.length, bg: "bg-white dark:bg-slate-900", tone: "text-slate-900 dark:text-slate-100", icon: Clock },
+            { label: t.todaySchedule, value: dashboardData?.todayScheduleCount ?? 0, bg: "bg-white dark:bg-slate-900", tone: "text-slate-900 dark:text-slate-100", icon: Clock },
             { label: t.criticalStock, value: critical.length, bg: critical.length ? "bg-rose-50 dark:bg-rose-900/20" : "bg-white dark:bg-slate-900", tone: critical.length ? "text-rose-700 dark:text-rose-300" : "text-slate-900 dark:text-slate-100", icon: AlertTriangle },
             { label: t.nearExpiry, value: expiring.length, bg: expiring.length ? "bg-amber-50 dark:bg-amber-900/20" : "bg-white dark:bg-slate-900", tone: expiring.length ? "text-amber-700 dark:text-amber-300" : "text-slate-900 dark:text-slate-100", icon: Clock },
             { label: t.expired, value: expired.length, bg: expired.length ? "bg-rose-50 dark:bg-rose-900/20" : "bg-white dark:bg-slate-900", tone: expired.length ? "text-rose-700 dark:text-rose-300" : "text-slate-900 dark:text-slate-100", icon: AlertTriangle },
