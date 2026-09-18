@@ -17,7 +17,7 @@ export default function AddMedicinePage() {
     e.preventDefault();
     setError("");
     try {
-      await api.post("/medicines", {
+      await api.post("/api/medicines", {
         ...form,
         stock_quantity: Number(form.stock_quantity),
         expiry_date: new Date(form.expiry_date).toISOString(),
@@ -71,7 +71,12 @@ export default function AddMedicinePage() {
               <CalendarDays size={14} className="text-slate-500 dark:text-slate-400" /> {t.expiryDate}
             </label>
             <div className="relative">
-              <input type="date" required {...field("expiry_date")} className="input-field pl-10" />
+              <input
+                type="date"
+                required
+                {...field("expiry_date")}
+                className="input-field pl-10 w-full box-border max-w-full appearance-none"
+              />
               <CalendarDays size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-400 pointer-events-none" />
             </div>
           </div>
@@ -90,6 +95,6 @@ export default function AddMedicinePage() {
 }
 
 // Temporary icon until we define MedicineBoxIcon properly
-function MedicineBoxIcon({ size, className }: { size: number; className?: string }) {
+function _MedicineBoxIcon({ size, className }: { size: number; className?: string }) {
   return <Pill size={size} className={className} />;
 }
