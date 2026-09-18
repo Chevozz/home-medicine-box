@@ -15,18 +15,32 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
 
   const load = async () => {
+    // Fetch each endpoint independently so one failure doesn't blank the others.
     try {
-      const [m, s, l] = await Promise.all([
-        api.get("/medicines").then((r) => r.data),
-        api.get("/schedules").then((r) => r.data),
-        api.get("/logs").then((r) => r.data),
-      ]);
-      setMedicines(m); setSchedules(s); setLogs(l);
+      const { data } = await api.get("/medicines");
+      setMedicines(Array.isArray(data) ? data : []);
     } catch (err) {
-      console.error("Dashboard load error:", err);
-    } finally {
-      setLoading(false);
+      console.error("Failed to load medicines:", err);
+      setMedicines([]);
     }
+
+    try {
+      const { data } = await api.get("/schedules");
+      setSchedules(Array.isArray(data) ? data : []);
+    } catch (err) {
+      console.error("Failed to load schedules:", err);
+      setSchedules([]);
+    }
+
+    try {
+      const { data } = await api.get("/logs");
+      setLogs(Array.isArray(data) ? data : []);
+    } catch (err) {
+      console.error("Failed to load logs:", err);
+      setLogs([]);
+    }
+
+    setLoading(false);
   };
 
   const recordTaken = async (medicineId: string) => {

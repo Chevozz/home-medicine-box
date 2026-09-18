@@ -35,8 +35,14 @@ export default function MedicinesPage() {
 
   const remove = async (id: string) => {
     if (!window.confirm(t.confirm)) return;
-    await api.delete(`/api/medicines/${id}`);
-    load();
+    try {
+      await api.delete(`/api/medicines/${id}`);
+      // Optimistic update: remove card immediately, no full reload needed
+      setMedicines((prev) => prev.filter((m) => m.id !== id));
+    } catch (err: any) {
+      console.error("Failed to delete medicine:", err);
+      alert(err.response?.data?.error || t.error);
+    }
   };
 
   const openEdit = (medicine: Medicine) => {
