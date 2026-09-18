@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { History, Pill, Plus, Trash2 } from "lucide-react";
 import ResponsiveNav from "@/components/layout/ResponsiveNav";
 import api from "@/lib/api";
@@ -8,6 +9,7 @@ import type { ConsumptionLog, Medicine } from "@/types";
 
 export default function HistoryPage() {
   const { t } = useTranslation();
+  const router = useRouter();
   const [logs, setLogs] = useState<ConsumptionLog[]>([]);
   const [allMedicines, setAllMedicines] = useState<Medicine[]>([]);
   const [loading, setLoading] = useState(true);
@@ -34,6 +36,8 @@ export default function HistoryPage() {
     try {
       await api.post("/api/logs", { medicine_id: mid, status });
       load(filterMedicineId);
+      // Revalidate cache on server for dashboard as well
+      router.refresh();
     } catch (err: any) {
       console.error("Gagal mencatat:", err);
       alert(err.response?.data?.error || t.error);

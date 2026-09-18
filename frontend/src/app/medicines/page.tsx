@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Plus, Edit3, Trash2, Package, AlertTriangle, AlertCircle, CalendarDays, Download } from "lucide-react";
 import ResponsiveNav from "@/components/layout/ResponsiveNav";
 import api from "@/lib/api";
@@ -9,6 +10,7 @@ import type { Medicine } from "@/types";
 
 export default function MedicinesPage() {
   const { t } = useTranslation();
+  const router = useRouter();
   const [medicines, setMedicines] = useState<Medicine[]>([]);
   const [loading, setLoading] = useState(true);
   const [editingMedicine, setEditingMedicine] = useState<Medicine | null>(null);
@@ -38,7 +40,10 @@ export default function MedicinesPage() {
     if (!window.confirm(t.confirm)) return;
     try {
       await api.delete(`/api/medicines/${id}`);
+      // Optimistic update
       setMedicines((prev) => prev.filter((m) => m.id !== id));
+      // Revalidate cache on server
+      router.refresh();
     } catch (err: any) {
       console.error("Failed to delete medicine:", err);
       alert(err.response?.data?.error || t.error);
@@ -75,6 +80,8 @@ export default function MedicinesPage() {
       });
       setShowEditModal(false);
       load();
+      // Revalidate cache on server
+      router.refresh();
     } catch (err: any) {
       alert(err.response?.data?.error || t.error);
     }

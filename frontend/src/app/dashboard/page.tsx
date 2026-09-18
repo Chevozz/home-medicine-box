@@ -24,6 +24,7 @@ export default function Dashboard() {
 
     try {
       const { data } = await api.get("/api/schedules");
+      console.log("Loaded schedules:", data);  // Debug log
       setSchedules(Array.isArray(data) ? data : []);
     } catch (err) {
       console.error("Failed to load schedules:", err);
@@ -34,16 +35,24 @@ export default function Dashboard() {
   };
 
   const recordConsumption = async (scheduleId: string, medicineId: string, status: "Taken" | "Missed") => {
+    console.log(`Recording consumption: scheduleId=${scheduleId}, medicineId=${medicineId}, status=${status}`);  // Debug log
+
     try {
       await api.post("/api/logs", {
         medicine_id: medicineId,
         status: status,
         schedule_id: scheduleId,
       });
-      // Optimistic update: remove from schedules list
-      setSchedules((prev) => prev.filter((s) => s.id !== scheduleId));
-    } catch (err) {
+      // Optimistic update: remove from schedules list immediately for responsive UI
+      setSchedules((prev) => {
+        const filtered = prev.filter((s) => s.id !== scheduleId);
+        console.log(`Removed schedule ${scheduleId}, remaining: ${filtered.length}`);  // Debug log
+        return filtered;
+      });
+    } catch (err: any) {
       console.error("Gagal mencatat konsumsi:", err);
+      console.error("Error response:", err.response?.data);  // Debug log
+      alert(err.response?.data?.error || "Gagal mencatat konsumsi. Silakan coba lagi.");
     }
   };
 

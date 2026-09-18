@@ -5,6 +5,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import jwt from "jsonwebtoken";
+import { revalidatePath } from "next/cache";
 
 export const dynamic = "force-dynamic";
 
@@ -128,6 +129,10 @@ export async function PUT(
       include: { schedules: true },
     });
 
+    // Revalidate caches
+    revalidatePath("/dashboard");
+    revalidatePath("/medicines");
+
     return NextResponse.json(updated);
   } catch (error: any) {
     console.error("PUT /api/medicines/[id] error:", error);
@@ -164,6 +169,10 @@ export async function DELETE(
     await prisma.medicine.delete({
       where: { id },
     });
+
+    // Revalidate caches
+    revalidatePath("/dashboard");
+    revalidatePath("/medicines");
 
     return NextResponse.json({ message: "Medicine deleted" });
   } catch (error) {
