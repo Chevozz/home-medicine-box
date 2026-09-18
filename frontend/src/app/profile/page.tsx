@@ -29,7 +29,7 @@ export default function ProfilePage() {
   };
 
   if (loading) return <main className="flex items-center justify-center h-64"><div className="animate-pulse text-slate-400">{t.loading}</div></main>;
-  if (!user) return <main className="p-6"><a href="/login" className="text-emerald-600 dark:text-emerald-400 font-medium">Login</a></main>;
+  if (!user) return <main className="p-6"><a href="/login" className="text-emerald-600 dark:text-emerald-400 font-medium">{t.login}</a></main>;
 
   return (
     <ResponsiveNav title={t.profileTitle}>
@@ -58,9 +58,4 @@ export default function ProfilePage() {
       </main>
     </ResponsiveNav>
   );
-}
-
-// Temporary icon until we define MedicineBoxIcon properly
-function MedicineBoxIcon({ size, className }: { size: number; className?: string }) {
-  return <Pill size={size} className={className} />;
 }

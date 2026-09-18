@@ -20,10 +20,13 @@ export default function HistoryPage() {
         api.get(`/api/logs${mid ? `?medicine_id=${mid}` : ""}`),
         api.get("/api/medicines")
       ]);
-      setLogs(logsRes.data);
-      setAllMedicines(medsRes.data);
+      // Safe array handling to prevent .map is not a function error
+      setLogs(Array.isArray(logsRes.data) ? logsRes.data : []);
+      setAllMedicines(Array.isArray(medsRes.data) ? medsRes.data : []);
     } catch (err) {
       console.error("Gagal load:", err);
+      setLogs([]);
+      setAllMedicines([]);
     }
     setLoading(false);
   };
@@ -32,8 +35,9 @@ export default function HistoryPage() {
     try {
       await api.post("/api/logs", { medicine_id: mid, status });
       load(filterMedicineId);
-    } catch (err) {
+    } catch (err: any) {
       console.error("Gagal mencatat:", err);
+      alert(err.response?.data?.error || t.error);
     }
   };
 
@@ -68,13 +72,13 @@ export default function HistoryPage() {
             <select value={filterMedicineId} onChange={(e) => { setFilterMedicineId(e.target.value); load(e.target.value); }}
               className="w-full input-field">
               <option value="">{t.allMedicines}</option>
-              {medicinesForFilter.map((med) => <option key={med.id} value={med.id}>{med.name}</option>)}
+              {Array.isArray(medicinesForFilter) && medicinesForFilter.map((med) => <option key={med.id} value={med.id}>{med.name}</option>)}
             </select>
           </div>
         </div>
 
         {/* Logs List */}
-        {logs.length === 0 ? (
+        {Array.isArray(logs) && logs.length === 0 ? (
           <div className="text-center py-12">
             <History size={56} className="mx-auto mb-4 text-slate-300 dark:text-slate-600" strokeWidth={1.5} />
             <h2 className="text-xl font-semibold text-slate-900 dark:text-slate-100">{t.noRecords}</h2>
@@ -84,7 +88,7 @@ export default function HistoryPage() {
           </div>
         ) : (
           <div className="space-y-4">
-            {logs.map((l) => (
+            {Array.isArray(logs) && logs.map((l) => (
               <div key={l.id} className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-4 hover:shadow-md transition-shadow duration-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div className="flex-1 min-w-0">
                   <p className="font-medium text-slate-900 dark:text-slate-100">{l.medicine?.name || "-"} {l.medicine?.dosage_instructions ? `(${l.medicine.dosage_instructions})` : ""}</p>
@@ -115,7 +119,7 @@ export default function HistoryPage() {
         )}
 
         {/* Quick Action Cards */}
-        {allMedicines.length > 0 && (
+        {Array.isArray(allMedicines) && allMedicines.length > 0 && (
           <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-4">
             <h2 className="text-base md:text-lg font-semibold mb-3 text-slate-900 dark:text-slate-100 flex items-center gap-2">
               <Plus size={16} className="text-emerald-600 dark:text-emerald-400" /> {t.recordConsumption}
