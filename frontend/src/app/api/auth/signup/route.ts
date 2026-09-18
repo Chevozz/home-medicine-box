@@ -2,7 +2,7 @@
 // Register a new user (name, email, password)
 
 import { NextResponse } from "next/server";
-import bcrypt from "bcryptjs";
+import bcrypt from 'bcryptjs';
 import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
