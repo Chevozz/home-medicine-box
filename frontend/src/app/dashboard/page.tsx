@@ -11,11 +11,9 @@ export default function Dashboard() {
   const { t } = useTranslation();
   const [medicines, setMedicines] = useState<Medicine[]>([]);
   const [schedules, setSchedules] = useState<Schedule[]>([]);
-  const [logs, setLogs] = useState<ConsumptionLog[]>([]);
   const [loading, setLoading] = useState(true);
 
   const load = async () => {
-    // Fetch each endpoint independently so one failure doesn't blank the others.
     try {
       const { data } = await api.get("/api/medicines");
       setMedicines(Array.isArray(data) ? data : []);
@@ -32,21 +30,18 @@ export default function Dashboard() {
       setSchedules([]);
     }
 
-    try {
-      const { data } = await api.get("/api/logs");
-      setLogs(Array.isArray(data) ? data : []);
-    } catch (err) {
-      console.error("Failed to load logs:", err);
-      setLogs([]);
-    }
-
     setLoading(false);
   };
 
-  const recordTaken = async (medicineId: string) => {
+  const recordConsumption = async (scheduleId: string, medicineId: string, status: "Taken" | "Missed") => {
     try {
-      await api.post("/api/logs", { medicine_id: medicineId, status: "Taken" });
-      load();
+      await api.post("/api/logs", {
+        medicine_id: medicineId,
+        status: status,
+        schedule_id: scheduleId,
+      });
+      // Optimistic update: remove from schedules list
+      setSchedules((prev) => prev.filter((s) => s.id !== scheduleId));
     } catch (err) {
       console.error("Gagal mencatat konsumsi:", err);
     }
@@ -71,9 +66,10 @@ export default function Dashboard() {
     return Math.ceil(diff / 86400000);
   };
 
+  // Filter today's schedules - show schedules for hours 06:00 to 22:00
   const todaysSchedule = schedules.filter((s) => {
     const h = parseInt(s.time_to_take.slice(0, 2), 10);
-    return h >= 6 && h < 23;
+    return h >= 6 && h <= 22;
   });
 
   if (loading) return <main className="flex items-center justify-center h-64"><div className="animate-pulse text-slate-400">{t.loading}</div></main>;
@@ -161,12 +157,20 @@ export default function Dashboard() {
                     <p className="font-medium text-slate-900 dark:text-slate-100 truncate">{s.medicine?.name || "Medicine"}</p>
                     <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">{s.time_to_take} • {s.frequency}</p>
                   </div>
-                  <button
-                    onClick={() => recordTaken(s.medicine_id)}
-                    className="btn-primary whitespace-nowrap"
-                  >
-                    {t.taken}
-                  </button>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => recordConsumption(s.id, s.medicine_id, "Missed")}
+                      className="text-xs px-3 py-1.5 rounded-lg font-medium transition-colors bg-rose-50 dark:bg-rose-900/20 text-rose-600 dark:text-rose-300 hover:bg-rose-100 dark:hover:bg-rose-900/40"
+                    >
+                      {t.missed}
+                    </button>
+                    <button
+                      onClick={() => recordConsumption(s.id, s.medicine_id, "Taken")}
+                      className="btn-primary whitespace-nowrap"
+                    >
+                      {t.taken}
+                    </button>
+                  </div>
                 </li>
               ))}
             </ul>

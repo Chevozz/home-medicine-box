@@ -14,6 +14,7 @@ export interface Medicine {
   expiry_date: string;
   created_at: string;
   updated_at: string;
+  schedules?: Schedule[];
 }
 
 export interface Schedule {
@@ -30,10 +31,12 @@ export interface ConsumptionLog {
   id: string;
   user_id: string;
   medicine_id: string;
+  schedule_id?: string;
   consumed_at: string;
   status: "Taken" | "Missed";
   created_at: string;
   medicine?: { id: string; name: string; dosage_instructions: string };
+  schedule?: Schedule;
 }
 
 export interface AuthTokens {

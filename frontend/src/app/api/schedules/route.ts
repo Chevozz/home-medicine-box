@@ -1,15 +1,15 @@
 // GET /api/schedules - List schedules for the authenticated user
-// POST /api/schedules - Create a new schedule
+// POST /api/logs - Record a new consumption log with schedule_id
 
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import jwt from "jsonwebtoken";
 import { z } from "zod";
 
-const ScheduleSchema = z.object({
+const LogSchema = z.object({
   medicine_id: z.string(),
-  time_to_take: z.string().min(1), // Format HH:mm
-  frequency: z.string().min(1),    // Daily, Weekly, etc.
+  status: z.enum(["Taken", "Missed"]),
+  schedule_id: z.string().optional(),  // Optional - link to specific schedule
 });
 
 export const dynamic = "force-dynamic";
@@ -37,7 +37,7 @@ export async function GET(request: Request) {
     const schedules = await prisma.schedule.findMany({
       where: { medicine: { user_id: userId } },
       include: { medicine: true },
-      orderBy: { created_at: "desc" },
+      orderBy: { time_to_take: "asc" },
     });
     return NextResponse.json(schedules);
   } catch (error) {
@@ -49,7 +49,7 @@ export async function GET(request: Request) {
   }
 }
 
-// POST: Create a new schedule
+// POST: Record a new consumption log (can include schedule_id)
 export async function POST(request: Request) {
   const userId = getUserIdFromRequest(request);
   if (!userId) {
@@ -58,9 +58,9 @@ export async function POST(request: Request) {
 
   try {
     const body = await request.json();
-    const parsed = ScheduleSchema.parse(body);
+    const parsed = LogSchema.parse(body);
 
-    // Verify medicine ownership before creating schedule
+    // Verify medicine ownership
     const medicine = await prisma.medicine.findFirst({
       where: { id: parsed.medicine_id, user_id: userId },
     });
@@ -71,26 +71,30 @@ export async function POST(request: Request) {
       );
     }
 
-    const newSchedule = await prisma.schedule.create({
+    const newLog = await prisma.consumptionLog.create({
       data: {
+        user_id: userId,
         medicine_id: parsed.medicine_id,
-        time_to_take: parsed.time_to_take,
-        frequency: parsed.frequency,
+        status: parsed.status,
+        schedule_id: parsed.schedule_id || undefined,
       },
-      include: { medicine: true },
+      include: {
+        medicine: true,
+        schedule: true,
+      },
     });
 
-    return NextResponse.json(newSchedule, { status: 201 });
+    return NextResponse.json(newLog, { status: 201 });
   } catch (error: any) {
-    console.error("POST /api/schedules error:", error);
+    console.error("POST /api/logs error:", error);
     if (error instanceof z.ZodError) {
       return NextResponse.json(
-        { error: "Invalid schedule data", details: error.errors },
+        { error: "Invalid log data", details: error.errors },
         { status: 400 }
       );
     }
     return NextResponse.json(
-      { error: "Failed to create schedule" },
+      { error: "Failed to record log" },
       { status: 500 }
     );
   }

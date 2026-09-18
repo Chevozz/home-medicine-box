@@ -35,6 +35,7 @@ interface Translations {
   addNewMedicine: string;
   manageMedicines: string;
   viewHistory: string;
+  syncCalendar: string;
 
   // Medicines
   medicineBox: string;
@@ -49,6 +50,10 @@ interface Translations {
   startAdding: string;
   typePlaceholder: string;
   dosagePlaceholder: string;
+  scheduleTimes: string;
+  scheduleTimesDesc: string;
+  addTime: string;
+  removeTime: string;
 
   // Medicine Types
   capsule: string;
@@ -141,6 +146,7 @@ const translations: Record<Language, Translations> = {
     addNewMedicine: "Tambah Obat Baru",
     manageMedicines: "Kelola Obat",
     viewHistory: "Lihat Riwayat",
+    syncCalendar: "Sinkron ke Kalender",
     medicineBox: "Kotak Obat",
     addMedicine: "Tambah Obat",
     editMedicine: "Edit Obat",
@@ -153,6 +159,10 @@ const translations: Record<Language, Translations> = {
     startAdding: "Mulailah dengan menambahkan obat pertama Anda ke kotak obat.",
     typePlaceholder: "Pilih...",
     dosagePlaceholder: "Contoh: 3x sehari sesudah makan",
+    scheduleTimes: "Jam Minum (Waktu)",
+    scheduleTimesDesc: "Pilih jam-jam kapan Anda harus minum obat ini",
+    addTime: "Tambah Jam",
+    removeTime: "Hapus jam ini",
     capsule: "Kapsul",
     syrup: "Sirup",
     tablet: "Tablet",
@@ -227,6 +237,7 @@ const translations: Record<Language, Translations> = {
     addNewMedicine: "Add New Medicine",
     manageMedicines: "Manage Medicines",
     viewHistory: "View History",
+    syncCalendar: "Sync to Calendar",
     medicineBox: "Medicine Box",
     addMedicine: "Add Medicine",
     editMedicine: "Edit Medicine",
@@ -239,6 +250,10 @@ const translations: Record<Language, Translations> = {
     startAdding: "Start by adding your first medicine to the box.",
     typePlaceholder: "Select...",
     dosagePlaceholder: "e.g., 3x daily after meals",
+    scheduleTimes: "Medicine Times",
+    scheduleTimesDesc: "Select the times you need to take this medicine",
+    addTime: "Add Time",
+    removeTime: "Remove this time",
     capsule: "Capsule",
     syrup: "Syrup",
     tablet: "Tablet",

@@ -1,5 +1,5 @@
 // GET /api/medicines - List all medicines
-// POST /api/medicines - Create a new medicine
+// POST /api/medicines - Create a new medicine with custom times
 
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
@@ -7,7 +7,6 @@ import jwt from "jsonwebtoken";
 
 export const dynamic = "force-dynamic";
 
-// Helper: extract user ID from Authorization header
 function getUserIdFromRequest(request: Request): string | null {
   const authHeader = request.headers.get("authorization");
   if (!authHeader || !authHeader.startsWith("Bearer ")) return null;
@@ -18,17 +17,6 @@ function getUserIdFromRequest(request: Request): string | null {
   } catch {
     return null;
   }
-}
-
-// Helper: derive default daily times from a dosage string like "3x sehari".
-// Falls back to a single morning slot when the frequency is unknown.
-const DEFAULT_TIMES = ["08:00", "14:00", "20:00", "18:00"];
-
-function parseDosageTimes(dosage: string): string[] {
-  const match = dosage.match(/(\d+)\s*x/i);
-  const count = match ? parseInt(match[1], 10) : 1;
-  if (count <= 0) return [DEFAULT_TIMES[0]];
-  return DEFAULT_TIMES.slice(0, Math.min(count, DEFAULT_TIMES.length));
 }
 
 // GET: List all medicines
@@ -42,6 +30,7 @@ export async function GET(request: Request) {
     const medicines = await prisma.medicine.findMany({
       where: { user_id: userId },
       orderBy: { created_at: "desc" },
+      include: { schedules: true },
     });
     return NextResponse.json(medicines);
   } catch (error) {
@@ -53,7 +42,7 @@ export async function GET(request: Request) {
   }
 }
 
-// POST: Create a new medicine
+// POST: Create a new medicine with custom schedule times
 export async function POST(request: Request) {
   const userId = getUserIdFromRequest(request);
   if (!userId) {
@@ -63,22 +52,31 @@ export async function POST(request: Request) {
   try {
     const body = await request.json();
 
-    // Field-level validation so the client knows exactly what's wrong.
     const errors: string[] = [];
     if (!body.name || typeof body.name !== "string")
       errors.push("name is required and must be a string");
     if (!body.type || typeof body.type !== "string")
       errors.push("type is required and must be a string");
-    if (typeof body.dosage_instructions !== "string")
-      errors.push("dosage_instructions must be a string");
     if (body.stock_quantity === undefined || body.stock_quantity === null || body.stock_quantity === "")
       errors.push("stock_quantity is required");
     if (!body.expiry_date) errors.push("expiry_date is required");
+    if (!body.schedule_times || !Array.isArray(body.schedule_times) || body.schedule_times.length === 0)
+      errors.push("schedule_times is required (array of time strings like '08:00')");
+
+    // Validate each time in schedule_times
+    const timeRegex = /^([01]?\d|2[0-3]):[0-5]\d$/;
+    if (errors.length === 0) {
+      body.schedule_times.forEach((t: string, i: number) => {
+        if (!timeRegex.test(t)) {
+          errors.push(`schedule_times[${i}] is not a valid time (HH:mm)`);
+        }
+      });
+    }
+
     if (errors.length > 0) {
       return NextResponse.json({ error: "Invalid medicine data", details: errors }, { status: 400 });
     }
 
-    // Coerce to the shapes Prisma expects.
     const stock_quantity = parseInt(body.stock_quantity, 10);
     if (Number.isNaN(stock_quantity) || stock_quantity < 0) {
       return NextResponse.json(
@@ -106,16 +104,23 @@ export async function POST(request: Request) {
       },
     });
 
-    // Auto-create default daily schedule(s) from dosage_instructions so the
-    // dashboard "Jadwal Hari Ini" list is populated as soon as a medicine is
-    // added. ponytail: heuristic on the leading "Nx" — upgrade to explicit
-    // schedule form if users need custom times.
-    const times = parseDosageTimes(body.dosage_instructions ?? "");
+    // Create schedules from user-selected times
     await prisma.schedule.createMany({
-      data: times.map((time_to_take) => ({
+      data: body.schedule_times.map((time_to_take: string) => ({
         medicine_id: newMedicine.id,
         time_to_take,
         frequency: "Daily",
+      })),
+    });
+
+    // Create recurring UserSchedule entries for ICS export
+    await prisma.userSchedule.createMany({
+      data: body.schedule_times.map((time_to_take: string) => ({
+        user_id: userId,
+        medicine_id: newMedicine.id,
+        name: `${body.name} - ${time_to_take}`,
+        time_to_take,
+        recurrence: "DAILY",
       })),
     });
 

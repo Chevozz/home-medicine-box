@@ -34,6 +34,7 @@ export async function GET(
     const { id } = await params;
     const medicine = await prisma.medicine.findFirst({
       where: { id, user_id: userId },
+      include: { schedules: true },
     });
     if (!medicine) {
       return NextResponse.json({ error: "Medicine not found" }, { status: 404 });
@@ -48,7 +49,7 @@ export async function GET(
   }
 }
 
-// PUT: Update a medicine
+// PUT: Update a medicine with custom schedule times
 export async function PUT(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
@@ -62,9 +63,9 @@ export async function PUT(
     const { id } = await params;
     const body = await request.json();
 
-    // Verify ownership
     const existing = await prisma.medicine.findFirst({
       where: { id, user_id: userId },
+      include: { schedules: true },
     });
     if (!existing) {
       return NextResponse.json({ error: "Medicine not found" }, { status: 404 });
@@ -82,10 +83,49 @@ export async function PUT(
       const expiry = new Date(body.expiry_date);
       if (!Number.isNaN(expiry.getTime())) data.expiry_date = expiry;
     }
+    if (body.schedule_times !== undefined && Array.isArray(body.schedule_times)) {
+      // Validate times
+      const timeRegex = /^([01]?\d|2[0-3]):[0-5]\d$/;
+      const validTimes = body.schedule_times.filter((t: string) => timeRegex.test(t));
+
+      // Update existing schedules and create new ones
+      const currentTimes = existing.schedules.map((s) => s.time_to_take);
+      const timesToAdd = validTimes.filter((t: string) => !currentTimes.includes(t));
+      const timesToRemove = currentTimes.filter((t: string) => !validTimes.includes(t));
+
+      await prisma.schedule.deleteMany({
+        where: { id: { in: existing.schedules.filter((s) => timesToRemove.includes(s.time_to_take)).map((s) => s.id) } },
+      });
+
+      await prisma.schedule.createMany({
+        data: timesToAdd.map((time_to_take: string) => ({
+          medicine_id: id,
+          time_to_take,
+          frequency: "Daily",
+        })),
+        skipDuplicates: true,
+      });
+
+      // Update UserSchedule entries
+      await prisma.userSchedule.deleteMany({
+        where: { medicine_id: id, user_id: userId },
+      });
+
+      await prisma.userSchedule.createMany({
+        data: validTimes.map((time_to_take: string) => ({
+          user_id: userId,
+          medicine_id: id,
+          name: `${body.name || existing.name} - ${time_to_take}`,
+          time_to_take,
+          recurrence: "DAILY",
+        })),
+      });
+    }
 
     const updated = await prisma.medicine.update({
       where: { id },
       data,
+      include: { schedules: true },
     });
 
     return NextResponse.json(updated);
@@ -111,13 +151,15 @@ export async function DELETE(
   try {
     const { id } = await params;
 
-    // Verify ownership before deleting
     const existing = await prisma.medicine.findFirst({
       where: { id, user_id: userId },
     });
     if (!existing) {
       return NextResponse.json({ error: "Medicine not found" }, { status: 404 });
     }
+
+    await prisma.schedule.deleteMany({ where: { medicine_id: id } });
+    await prisma.userSchedule.deleteMany({ where: { medicine_id: id } });
 
     await prisma.medicine.delete({
       where: { id },

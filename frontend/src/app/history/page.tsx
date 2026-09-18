@@ -20,7 +20,6 @@ export default function HistoryPage() {
         api.get(`/api/logs${mid ? `?medicine_id=${mid}` : ""}`),
         api.get("/api/medicines")
       ]);
-      // Safe array handling to prevent .map is not a function error
       setLogs(Array.isArray(logsRes.data) ? logsRes.data : []);
       setAllMedicines(Array.isArray(medsRes.data) ? medsRes.data : []);
     } catch (err) {
@@ -50,6 +49,30 @@ export default function HistoryPage() {
   const formatTime = (dateStr: string) => {
     const date = new Date(dateStr);
     return date.toLocaleString("id-ID", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" });
+  };
+
+  const getStatusBadge = (status: string, time?: string) => {
+    const icon = status === "Taken" ? <Plus size={10} /> : <Trash2 size={10} />;
+    const label = status === "Taken" ? t.taken : t.missed;
+    const bgClass = status === "Taken"
+      ? "bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-300"
+      : "bg-rose-50 dark:bg-rose-900/20 text-rose-600 dark:text-rose-300";
+
+    if (time) {
+      const [hour, minute] = time.split(":");
+      const displayTime = `${hour}:${minute}`;
+      return (
+        <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium ${bgClass}`}>
+          {icon} {label} - {displayTime}
+        </span>
+      );
+    }
+
+    return (
+      <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium ${bgClass}`}>
+        {icon} {label}
+      </span>
+    );
   };
 
   return (
@@ -93,25 +116,14 @@ export default function HistoryPage() {
                 <div className="flex-1 min-w-0">
                   <p className="font-medium text-slate-900 dark:text-slate-100">{l.medicine?.name || "-"} {l.medicine?.dosage_instructions ? `(${l.medicine.dosage_instructions})` : ""}</p>
                   <p className="text-sm text-slate-500 dark:text-slate-400">{formatTime(l.consumed_at)}</p>
+                  {l.schedule && (
+                    <p className="text-xs text-emerald-600 dark:text-emerald-400 mt-1">
+                      Scheduled at: {l.schedule.time_to_take}
+                    </p>
+                  )}
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium ${
-                    l.status === "Taken"
-                      ? "bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-300"
-                      : "bg-rose-50 dark:bg-rose-900/20 text-rose-600 dark:text-rose-300"
-                  }`}>
-                    {l.status === "Taken" ? (
-                      <>
-                        <Plus size={10} className="mr-1" />
-                        {t.taken}
-                      </>
-                    ) : (
-                      <>
-                        <Trash2 size={10} className="mr-1" />
-                        {t.missed}
-                      </>
-                    )}
-                  </span>
+                  {getStatusBadge(l.status, l.schedule?.time_to_take)}
                 </div>
               </div>
             ))}
@@ -130,6 +142,11 @@ export default function HistoryPage() {
                   <div className="min-w-0">
                     <p className="font-medium text-slate-900 dark:text-slate-100">{m.name}</p>
                     <p className="text-sm text-slate-500 dark:text-slate-400">{m.stock_quantity} {t.stock}</p>
+                    {m.schedules && m.schedules.length > 0 && (
+                      <p className="text-xs text-emerald-600 dark:text-emerald-400 mt-1">
+                        Times: {m.schedules.map((s) => s.time_to_take).join(", ")}
+                      </p>
+                    )}
                   </div>
                   <div className="flex gap-1.5">
                     <button onClick={() => record(m.id, "Taken")} className="btn-primary text-sm px-3 py-1.5">
