@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Plus, CalendarDays, Clock, Trash2 } from "lucide-react";
+import { Plus, CalendarDays, Clock, Trash2, X } from "lucide-react";
 import ResponsiveNav from "@/components/layout/ResponsiveNav";
 import api from "@/lib/api";
 import { useTranslation } from "@/lib/i18n";
@@ -151,8 +151,8 @@ export default function AddMedicinePage() {
           </div>
 
           <div className="flex gap-2 pt-2">
-            <button type="button" onClick={() => router.back()} className="btn-secondary flex-1 flex items-center justify-center gap-2">
-              <Plus size={14} /> {t.cancel}
+            <button type="button" onClick={() => router.back()} className="btn-danger flex-1 flex items-center justify-center gap-2">
+              <X size={14} /> {t.cancel}
             </button>
             <button type="submit" className="btn-primary flex-1 flex items-center justify-center gap-2">
               <Plus size={14} /> {t.save}

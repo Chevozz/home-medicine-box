@@ -2,7 +2,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Eye, EyeOff, Mail, Lock, Pill } from "lucide-react";
+import { Eye, EyeOff, Mail, Lock, Pill, X } from "lucide-react";
 import ResponsiveNav from "@/components/layout/ResponsiveNav";
 import { useTranslation } from "@/lib/i18n";
 import api from "@/lib/api";
@@ -145,7 +145,7 @@ export default function LoginPage() {
                   />
                 </div>
                 <div className="flex justify-end gap-2">
-                  <button onClick={() => setShowForgotModal(false)} className="btn-secondary">{t.cancel}</button>
+                  <button onClick={() => setShowForgotModal(false)} className="btn-danger">{t.cancel}</button>
                   <button type="submit" className="btn-primary">{t.sendResetLink}</button>
                 </div>
               </form>

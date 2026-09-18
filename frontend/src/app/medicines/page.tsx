@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Plus, Edit3, Trash2, Package, AlertTriangle, AlertCircle, CalendarDays, Download } from "lucide-react";
+import { Plus, Edit3, Trash2, Package, AlertTriangle, AlertCircle, CalendarDays, Download, X } from "lucide-react";
 import ResponsiveNav from "@/components/layout/ResponsiveNav";
 import api from "@/lib/api";
 import { useTranslation } from "@/lib/i18n";
@@ -343,7 +343,7 @@ export default function MedicinesPage() {
                 </button>
               </div>
               <div className="flex justify-end pt-4 space-x-3">
-                <button onClick={cancelEdit} className="btn-secondary">{t.cancel}</button>
+                <button onClick={cancelEdit} className="btn-danger">{t.cancel}</button>
                 <button type="submit" className="btn-primary">{t.save}</button>
               </div>
             </form>
