@@ -1,5 +1,6 @@
 // App focus/visibility management for PWA sync on iOS
 // Detects when app becomes visible again after being closed/backgrounded
+"use client";
 
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
