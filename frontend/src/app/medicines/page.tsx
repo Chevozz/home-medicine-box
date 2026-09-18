@@ -79,6 +79,16 @@ export default function MedicinesPage() {
         schedule_times: scheduleTimes.filter((t) => t.trim() !== ""),
       });
       setShowEditModal(false);
+      // Reset form state so stale values cannot be reused on the next edit
+      setFormData({
+        name: "",
+        type: "",
+        dosage_instructions: "",
+        stock_quantity: "",
+        expiry_date: ""
+      });
+      setScheduleTimes(["08:00", "14:00", "20:00"]);
+      setEditingMedicine(null);
       load();
       // Revalidate cache on server
       router.refresh();
@@ -101,34 +111,42 @@ export default function MedicinesPage() {
     icsLines.push("BEGIN:VCALENDAR");
     icsLines.push("VERSION:2.0");
     icsLines.push("PRODID:-//MedTracker//MedTracker Calendar//ID");
+    icsLines.push("CALSCALE:GREGORIAN");
+    icsLines.push("METHOD:PUBLISH");
 
-    // Generate events for each schedule time (next 30 days)
-    scheduleTimes.forEach((time, index) => {
+    // Generate events for each schedule time - daily recurring events
+    scheduleTimes.forEach((time) => {
       const [hour, minute] = time.split(":");
-      const date = new Date(now);
-      date.setHours(parseInt(hour), parseInt(minute), 0, 0);
+      const startHour = parseInt(hour, 10);
+      const startMinute = parseInt(minute, 10);
 
-      // Find the next occurrence that's >= today
-      if (date.getTime() < now.getTime()) {
-        date.setDate(date.getDate() + 1);
+      // Use today's date as the start of the recurring event
+      const startDate = new Date();
+      startDate.setHours(startHour, startMinute, 0, 0);
+
+      // Ensure start date is today or in the future (not past)
+      if (startDate.getTime() < now.getTime()) {
+        startDate.setDate(startDate.getDate() + 1);
       }
 
-      for (let day = 0; day < 30; day++) {
-        const eventDate = new Date(date);
-        eventDate.setDate(eventDate.getDate() + day);
+      // Calculate end date (1 hour after start time)
+      const endDate = new Date(startDate);
+      endDate.setHours(startDate.getHours() + 1, 0, 0, 0);
 
-        const uid = `${medicine.id}-${time}-${day}@medtracker.app`;
-        const summary = `${medicine.name} - ${time}`;
-        const description = `Minum obat: ${medicine.name}\n${medicine.dosage_instructions || ""}`;
+      const uid = `${medicine.id}-${time.replace(":", "")}@medtracker.app`;
+      const summary = `${medicine.name} - ${time}`;
+      const description = `Minum obat: ${medicine.name}\n${medicine.dosage_instructions || ""}`;
 
-        icsLines.push("BEGIN:VEVENT");
-        icsLines.push(`UID:${uid}`);
-        icsLines.push(`DTSTAMP:${formatDateForICS(now)}`);
-        icsLines.push(`DTSTART:${formatDateForICS(eventDate)}`);
-        icsLines.push(`SUMMARY:${summary}`);
-        icsLines.push(`DESCRIPTION:${description}`);
-        icsLines.push("END:VEVENT");
-      }
+      // ICS Event with RRULE for daily repetition
+      icsLines.push("BEGIN:VEVENT");
+      icsLines.push(`UID:${uid}`);
+      icsLines.push(`DTSTAMP:${formatDateForICS(now)}`);
+      icsLines.push(`DTSTART:${formatDateForICS(startDate)}`);
+      icsLines.push(`DTEND:${formatDateForICS(endDate)}`);
+      icsLines.push(`SUMMARY:${summary}`);
+      icsLines.push(`DESCRIPTION:${description}`);
+      icsLines.push(`RRULE:FREQ=DAILY;INTERVAL=1`);
+      icsLines.push("END:VEVENT");
     });
 
     // ICS Footer

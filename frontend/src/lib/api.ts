@@ -1,7 +1,7 @@
 "use client";
 import axios from "axios";
 
-// Ponytail: base URL empty string means same-origin (Next.js API routes now
+// ponytail: base URL empty string means same-origin (Next.js API routes now
 // live inside the same frontend app — frontend + backend unified on Vercel).
 const api = axios.create({
   baseURL: "",
@@ -13,6 +13,8 @@ api.interceptors.request.use((config) => {
   if (typeof window !== "undefined") {
     const token = localStorage.getItem("token");
     if (token) config.headers.Authorization = `Bearer ${token}`;
+    // Next.js API routes return Cache-Control: no-store in response headers
+    // which tells Next.js not to cache the response. This ensures fresh data.
   }
   return config;
 });

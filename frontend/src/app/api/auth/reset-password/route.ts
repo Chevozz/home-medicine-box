@@ -6,6 +6,7 @@ import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
 
 interface ResetPasswordPayload {
   token?: string;
@@ -63,12 +64,19 @@ export async function POST(request: Request) {
 
     return NextResponse.json({
       message: "Password berhasil direset. Silakan login dengan password baru.",
-    });
+    }, { headers: { "Cache-Control": "no-store, max-age=0, must-revalidate" } });
   } catch (error) {
     console.error("Reset password error:", error);
     return NextResponse.json(
       { error: "Internal server error" },
-      { status: 500 }
+      { status: 500, headers: { "Cache-Control": "no-store, max-age=0, must-revalidate" } }
     );
   }
+}
+
+export async function GET() {
+  return NextResponse.json(
+    { error: "Method not allowed" },
+    { status: 405, headers: { "Cache-Control": "no-store, max-age=0, must-revalidate" } }
+  );
 }

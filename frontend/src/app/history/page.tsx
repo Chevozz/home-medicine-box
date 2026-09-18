@@ -46,6 +46,11 @@ export default function HistoryPage() {
 
   useEffect(() => { load(); }, []);
 
+  // Force refresh when filter changes to bypass Next.js cache
+  useEffect(() => {
+    load(filterMedicineId);
+  }, [filterMedicineId]);
+
   const medicinesForFilter = allMedicines.map((m) => ({ id: m.id, name: m.name }));
 
   if (loading) return <main className="flex items-center justify-center h-64"><div className="animate-pulse text-slate-400">{t.loading}</div></main>;

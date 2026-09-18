@@ -15,6 +15,7 @@ interface Translations {
 
   // Common
   save: string;
+  saving: string;
   cancel: string;
   delete: string;
   edit: string;
@@ -129,6 +130,7 @@ const translations: Record<Language, Translations> = {
     login: "Masuk",
     register: "Daftar",
     save: "Simpan",
+    saving: "Menyimpan...",
     cancel: "Batal",
     delete: "Hapus",
     edit: "Edit",
@@ -221,6 +223,7 @@ const translations: Record<Language, Translations> = {
     login: "Login",
     register: "Register",
     save: "Save",
+    saving: "Saving...",
     cancel: "Cancel",
     delete: "Delete",
     edit: "Edit",

@@ -9,6 +9,7 @@ import { revalidatePath } from "next/cache";
 console.log("[Route Handler] /api/logs route loaded");
 
 export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
 
 function getUserIdFromRequest(request: Request): string | null {
   const authHeader = request.headers.get("authorization");
@@ -36,14 +37,21 @@ export async function GET(request: Request) {
       include: { medicine: true, schedule: true },
       orderBy: { consumed_at: "desc" },
     });
-    return NextResponse.json(logs);
+    return NextResponse.json(logs, { headers: { "Cache-Control": "no-store, max-age=0, must-revalidate" } });
   } catch (error) {
     console.error("GET /api/logs error:", error);
     return NextResponse.json(
       { error: "Failed to fetch logs" },
-      { status: 500 }
+      { status: 500, headers: { "Cache-Control": "no-store, max-age=0, must-revalidate" } }
     );
   }
+}
+
+export async function PUT() {
+  return NextResponse.json(
+    { error: "Method not allowed" },
+    { status: 405, headers: { "Cache-Control": "no-store, max-age=0, must-revalidate" } }
+  );
 }
 
 // POST: Record a new consumption log
@@ -137,7 +145,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json(
       { success: true, message: "Log recorded", log: result },
-      { status: 201 }
+      { status: 201, headers: { "Cache-Control": "no-store, max-age=0, must-revalidate" } }
     );
   } catch (error: any) {
     console.error("[Route Handler] POST /api/logs error:", error);

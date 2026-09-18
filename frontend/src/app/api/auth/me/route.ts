@@ -6,6 +6,7 @@ import { prisma } from "@/lib/prisma";
 import jwt from "jsonwebtoken";
 
 export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
 
 function getUserIdFromRequest(request: Request): string | null {
   const authHeader = request.headers.get("authorization");
@@ -34,14 +35,21 @@ export async function GET(request: Request) {
     if (!user) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
-    return NextResponse.json(user);
+    return NextResponse.json(user, { headers: { "Cache-Control": "no-store, max-age=0, must-revalidate" } });
   } catch (error) {
     console.error("GET /api/auth/me error:", error);
     return NextResponse.json(
       { error: "Failed to fetch user" },
-      { status: 500 }
+      { status: 500, headers: { "Cache-Control": "no-store, max-age=0, must-revalidate" } }
     );
   }
+}
+
+export async function DELETE() {
+  return NextResponse.json(
+    { error: "Method not allowed" },
+    { status: 405, headers: { "Cache-Control": "no-store, max-age=0, must-revalidate" } }
+  );
 }
 
 // PATCH: update user name
@@ -66,7 +74,7 @@ export async function PATCH(request: Request) {
       select: { id: true, name: true, email: true },
     });
 
-    return NextResponse.json(updated);
+    return NextResponse.json(updated, { headers: { "Cache-Control": "no-store, max-age=0, must-revalidate" } });
   } catch (error: any) {
     console.error("PATCH /api/auth/me error:", error);
     return NextResponse.json(

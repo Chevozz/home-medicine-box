@@ -7,6 +7,7 @@ import crypto from "crypto";
 import nodemailer from "nodemailer";
 
 export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
 
 interface ForgotPasswordPayload {
   email?: string;
@@ -36,7 +37,7 @@ export async function POST(request: Request) {
       "Jika email terdaftar, instruksi reset telah dikirim ke email Anda.";
 
     if (!user) {
-      return NextResponse.json({ message: successMessage });
+      return NextResponse.json({ message: successMessage }, { headers: { "Cache-Control": "no-store, max-age=0, must-revalidate" } });
     }
 
     // Generate secure reset token
@@ -56,14 +57,21 @@ export async function POST(request: Request) {
     const resetUrl = `${process.env.NEXT_PUBLIC_APP_URL}/reset-password?token=${resetToken}`;
     await sendResetEmail(user.email, resetUrl);
 
-    return NextResponse.json({ message: successMessage });
+    return NextResponse.json({ message: successMessage }, { headers: { "Cache-Control": "no-store, max-age=0, must-revalidate" } });
   } catch (error) {
     console.error("Forgot password error:", error);
     return NextResponse.json(
       { error: "Internal server error" },
-      { status: 500 }
+      { status: 500, headers: { "Cache-Control": "no-store, max-age=0, must-revalidate" } }
     );
   }
+}
+
+export async function GET() {
+  return NextResponse.json(
+    { error: "Method not allowed" },
+    { status: 405, headers: { "Cache-Control": "no-store, max-age=0, must-revalidate" } }
+  );
 }
 
 async function sendResetEmail(email: string, resetUrl: string) {

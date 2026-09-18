@@ -14,6 +14,7 @@ const ScheduleSchema = z.object({
 });
 
 export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
 
 function getUserIdFromRequest(request: Request): string | null {
   const authHeader = request.headers.get("authorization");
@@ -40,14 +41,21 @@ export async function GET(request: Request) {
       include: { medicine: true },
       orderBy: { time_to_take: "asc" },
     });
-    return NextResponse.json(schedules);
+    return NextResponse.json(schedules, { headers: { "Cache-Control": "no-store, max-age=0, must-revalidate" } });
   } catch (error) {
     console.error("GET /api/schedules error:", error);
     return NextResponse.json(
       { error: "Failed to fetch schedules" },
-      { status: 500 }
+      { status: 500, headers: { "Cache-Control": "no-store, max-age=0, must-revalidate" } }
     );
   }
+}
+
+export async function PUT() {
+  return NextResponse.json(
+    { error: "Method not allowed" },
+    { status: 405, headers: { "Cache-Control": "no-store, max-age=0, must-revalidate" } }
+  );
 }
 
 // POST: Create a new schedule (not used for consumption logging)
@@ -85,7 +93,7 @@ export async function POST(request: Request) {
     revalidatePath("/dashboard");
     revalidatePath("/medicines");
 
-    return NextResponse.json(newSchedule, { status: 201 });
+    return NextResponse.json(newSchedule, { status: 201, headers: { "Cache-Control": "no-store, max-age=0, must-revalidate" } });
   } catch (error: any) {
     console.error("POST /api/schedules error:", error);
     if (error instanceof z.ZodError) {

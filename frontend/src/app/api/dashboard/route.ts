@@ -6,6 +6,7 @@ import { prisma } from "@/lib/prisma";
 import jwt from "jsonwebtoken";
 
 export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
 
 function getUserIdFromRequest(request: Request): string | null {
   const authHeader = request.headers.get("authorization");
@@ -54,12 +55,19 @@ export async function GET(request: Request) {
       nearExpiry,
       todaySchedules,
       todayScheduleCount: todaySchedules.length,
-    });
+    }, { headers: { "Cache-Control": "no-store, max-age=0, must-revalidate" } });
   } catch (error) {
     console.error("GET /api/dashboard error:", error);
     return NextResponse.json(
       { error: "Failed to fetch dashboard stats" },
-      { status: 500 }
+      { status: 500, headers: { "Cache-Control": "no-store, max-age=0, must-revalidate" } }
     );
   }
+}
+
+export function POST() {
+  return NextResponse.json(
+    { error: "Method not allowed" },
+    { status: 405, headers: { "Cache-Control": "no-store, max-age=0, must-revalidate" } }
+  );
 }

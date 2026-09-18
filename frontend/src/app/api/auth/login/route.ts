@@ -7,6 +7,7 @@ import jwt from "jsonwebtoken";
 import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
 
 interface LoginPayload {
   email?: string;
@@ -57,12 +58,19 @@ export async function POST(request: Request) {
     return NextResponse.json({
       token,
       user: { id: user.id, name: user.name, email: user.email },
-    });
+    }, { headers: { "Cache-Control": "no-store, max-age=0, must-revalidate" } });
   } catch (error) {
     console.error("Login error:", error);
     return NextResponse.json(
       { error: "Internal server error" },
-      { status: 500 }
+      { status: 500, headers: { "Cache-Control": "no-store, max-age=0, must-revalidate" } }
     );
   }
+}
+
+export async function GET() {
+  return NextResponse.json(
+    { error: "Method not allowed" },
+    { status: 405, headers: { "Cache-Control": "no-store, max-age=0, must-revalidate" } }
+  );
 }

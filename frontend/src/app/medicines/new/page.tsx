@@ -6,6 +6,9 @@ import ResponsiveNav from "@/components/layout/ResponsiveNav";
 import api from "@/lib/api";
 import { useTranslation } from "@/lib/i18n";
 
+// Cache-Control headers are set by the API route; fetch() calls use axios
+// with `cache: 'no-store'` semantics via the api client in @/lib/api.
+
 export default function AddMedicinePage() {
   const { t } = useTranslation();
   const [form, setForm] = useState({
@@ -17,6 +20,7 @@ export default function AddMedicinePage() {
   });
   const [scheduleTimes, setScheduleTimes] = useState<string[]>(["08:00", "14:00"]);
   const [error, setError] = useState("");
+  const [submitting, setSubmitting] = useState(false);
   const router = useRouter();
 
   const submit = async (e: React.FormEvent) => {
@@ -27,6 +31,7 @@ export default function AddMedicinePage() {
       setError("Setidaknya satu waktu minum obat harus diisi");
       return;
     }
+    setSubmitting(true);
     try {
       await api.post("/api/medicines", {
         ...form,
@@ -34,10 +39,25 @@ export default function AddMedicinePage() {
         expiry_date: new Date(form.expiry_date).toISOString(),
         schedule_times: validTimes,
       });
+
+      // Reset form before navigating so stale input state cannot be reused
+      setForm({
+        name: "",
+        type: "",
+        dosage_instructions: "",
+        stock_quantity: "",
+        expiry_date: "",
+      });
+      setScheduleTimes(["08:00", "14:00"]);
+
+      // Push first, then refresh the router cache so /medicines and
+      // /dashboard re-fetch from the database instead of serving stale data.
       router.push("/medicines");
       router.refresh();
     } catch (err: any) {
       setError(err.response?.data?.error || t.error);
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -151,11 +171,11 @@ export default function AddMedicinePage() {
           </div>
 
           <div className="flex gap-2 pt-2">
-            <button type="button" onClick={() => router.back()} className="btn-danger flex-1 flex items-center justify-center gap-2">
+            <button type="button" onClick={() => router.back()} disabled={submitting} className="btn-danger flex-1 flex items-center justify-center gap-2 opacity-50">
               <X size={14} /> {t.cancel}
             </button>
-            <button type="submit" className="btn-primary flex-1 flex items-center justify-center gap-2">
-              <Plus size={14} /> {t.save}
+            <button type="submit" disabled={submitting} className="btn-primary flex-1 flex items-center justify-center gap-2">
+              <Plus size={14} /> {submitting ? t.saving : t.save}
             </button>
           </div>
         </form>

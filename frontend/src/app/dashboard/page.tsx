@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { AlertTriangle, Clock, Pill, Package, Plus, ArrowRight, History as HistoryIcon } from "lucide-react";
 import ResponsiveNav from "@/components/layout/ResponsiveNav";
 import api from "@/lib/api";
@@ -9,6 +10,7 @@ import type { Medicine, Schedule } from "@/types";
 
 export default function Dashboard() {
   const { t } = useTranslation();
+  const router = useRouter();
   const [medicines, setMedicines] = useState<Medicine[]>([]);
   const [schedules, setSchedules] = useState<Schedule[]>([]);
   const [loading, setLoading] = useState(true);
@@ -58,6 +60,10 @@ export default function Dashboard() {
         console.log(`Removed schedule ${scheduleId}, remaining: ${filtered.length}`);  // Debug log
         return filtered;
       });
+
+      // Force router cache refresh so dashboard stats, stock, and history
+      // re-fetch from Supabase instead of serving stale Next.js cache.
+      router.refresh();
     } catch (err: any) {
       console.error("Gagal mencatat konsumsi:", err);
       console.error("Error response:", err.response?.data);  // Debug log

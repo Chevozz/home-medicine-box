@@ -7,6 +7,7 @@ import jwt from "jsonwebtoken";
 import { revalidatePath } from "next/cache";
 
 export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
 
 function getUserIdFromRequest(request: Request): string | null {
   const authHeader = request.headers.get("authorization");
@@ -33,14 +34,21 @@ export async function GET(request: Request) {
       orderBy: { created_at: "desc" },
       include: { schedules: true },
     });
-    return NextResponse.json(medicines);
+    return NextResponse.json(medicines, { headers: { "Cache-Control": "no-store, max-age=0, must-revalidate" } });
   } catch (error) {
     console.error("GET /api/medicines error:", error);
     return NextResponse.json(
       { error: "Failed to fetch medicines" },
-      { status: 500 }
+      { status: 500, headers: { "Cache-Control": "no-store, max-age=0, must-revalidate" } }
     );
   }
+}
+
+export async function PUT() {
+  return NextResponse.json(
+    { error: "Method not allowed" },
+    { status: 405, headers: { "Cache-Control": "no-store, max-age=0, must-revalidate" } }
+  );
 }
 
 // POST: Create a new medicine with custom schedule times
@@ -129,7 +137,7 @@ export async function POST(request: Request) {
     revalidatePath("/dashboard");
     revalidatePath("/medicines");
 
-    return NextResponse.json(newMedicine, { status: 201 });
+    return NextResponse.json(newMedicine, { status: 201, headers: { "Cache-Control": "no-store, max-age=0, must-revalidate" } });
   } catch (error: any) {
     console.error("POST /api/medicines error:", error);
     return NextResponse.json(

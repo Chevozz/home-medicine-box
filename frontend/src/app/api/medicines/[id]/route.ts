@@ -8,6 +8,7 @@ import jwt from "jsonwebtoken";
 import { revalidatePath } from "next/cache";
 
 export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
 
 function getUserIdFromRequest(request: Request): string | null {
   const authHeader = request.headers.get("authorization");
@@ -40,14 +41,21 @@ export async function GET(
     if (!medicine) {
       return NextResponse.json({ error: "Medicine not found" }, { status: 404 });
     }
-    return NextResponse.json(medicine);
+    return NextResponse.json(medicine, { headers: { "Cache-Control": "no-store, max-age=0, must-revalidate" } });
   } catch (error) {
     console.error("GET /api/medicines/[id] error:", error);
     return NextResponse.json(
       { error: "Failed to fetch medicine" },
-      { status: 500 }
+      { status: 500, headers: { "Cache-Control": "no-store, max-age=0, must-revalidate" } }
     );
   }
+}
+
+export async function POST() {
+  return NextResponse.json(
+    { error: "Method not allowed" },
+    { status: 405, headers: { "Cache-Control": "no-store, max-age=0, must-revalidate" } }
+  );
 }
 
 // PUT: Update a medicine with custom schedule times
@@ -133,7 +141,7 @@ export async function PUT(
     revalidatePath("/dashboard");
     revalidatePath("/medicines");
 
-    return NextResponse.json(updated);
+    return NextResponse.json(updated, { headers: { "Cache-Control": "no-store, max-age=0, must-revalidate" } });
   } catch (error: any) {
     console.error("PUT /api/medicines/[id] error:", error);
     return NextResponse.json(
@@ -174,7 +182,7 @@ export async function DELETE(
     revalidatePath("/dashboard");
     revalidatePath("/medicines");
 
-    return NextResponse.json({ message: "Medicine deleted" });
+    return NextResponse.json({ message: "Medicine deleted" }, { headers: { "Cache-Control": "no-store, max-age=0, must-revalidate" } });
   } catch (error) {
     console.error("DELETE /api/medicines/[id] error:", error);
     return NextResponse.json(
