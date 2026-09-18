@@ -84,6 +84,7 @@ interface Translations {
   // Auth
   email: string;
   password: string;
+  confirmPassword: string;
   name: string;
   forgotPassword: string;
   resetPassword: string;
@@ -197,6 +198,7 @@ const translations: Record<Language, Translations> = {
     signUpDesc: "Daftar untuk membuat akun baru",
     resetPasswordSent: "Link reset password telah dikirim ke email Anda.",
     resetPasswordError: "Gagal mengirim link reset",
+    confirmPassword: "Konfirmasi Password",
     profileTitle: "Profil Pengguna",
     saveChanges: "Simpan Perubahan",
     stockEmpty: "Stok Habis!",
@@ -288,6 +290,7 @@ const translations: Record<Language, Translations> = {
     signUpDesc: "Sign up to create a new account",
     resetPasswordSent: "Password reset link has been sent to your email.",
     resetPasswordError: "Failed to send reset link",
+    confirmPassword: "Confirm Password",
     profileTitle: "User Profile",
     saveChanges: "Save Changes",
     stockEmpty: "Out of Stock!",
