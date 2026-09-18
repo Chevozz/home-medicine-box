@@ -37,6 +37,23 @@ self.addEventListener('fetch', (e) => {
     return;
   }
 
+  // Skip API mutation endpoints entirely - do not cache POST/PUT/DELETE/PATCH
+  // Also skip auth endpoints to avoid stale auth data
+  if (url.pathname.startsWith('/api/auth/') ||
+      url.pathname.startsWith('/api/medicines') ||
+      url.pathname.startsWith('/api/logs') ||
+      url.pathname.startsWith('/api/schedules') ||
+      url.pathname.startsWith('/api/dashboard') ||
+      url.pathname.startsWith('/api/medicines/')) {
+    // Always fetch fresh for API routes, never cache
+    e.respondWith(
+      fetch(e.request).catch(() => {
+        return new Response('', { status: 503 });
+      })
+    );
+    return;
+  }
+
   // Only cache GET requests - skip POST, PUT, DELETE, etc.
   if (e.request.method !== 'GET') {
     return;

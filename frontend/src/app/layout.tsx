@@ -4,6 +4,7 @@ import "@/app/globals.css";
 import { ThemeProvider } from "@/lib/theme";
 import { I18nProvider } from "@/lib/i18n";
 import { SWRegister } from "@/lib/sw";
+import { FocusSync } from "@/lib/appFocus";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 
@@ -54,6 +55,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <I18nProvider>
             {children}
             <SWRegister />
+            <FocusSync />
           </I18nProvider>
         </ThemeProvider>
       </body>
