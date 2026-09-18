@@ -33,7 +33,7 @@ export default function AddMedicinePage() {
     }
     setSubmitting(true);
     try {
-      await api.post("/api/medicines", {
+      const response = await api.post("/api/medicines", {
         ...form,
         stock_quantity: Number(form.stock_quantity),
         expiry_date: new Date(form.expiry_date).toISOString(),
@@ -50,12 +50,20 @@ export default function AddMedicinePage() {
       });
       setScheduleTimes(["08:00", "14:00"]);
 
-      // Push first, then refresh the router cache so /medicines and
-      // /dashboard re-fetch from the database instead of serving stale data.
-      router.push("/medicines");
+      // Refresh router cache FIRST to invalidate Next.js cache,
+      // then navigate to /medicines so the page re-fetches fresh data from DB.
       router.refresh();
+      router.push("/medicines");
     } catch (err: any) {
-      setError(err.response?.data?.error || t.error);
+      // Handle network/Service Worker errors gracefully
+      if (err.code === "ECONNABORTED" || err.message?.includes("Network Error")) {
+        setError("Koneksi bermasalah. Silakan cek internet dan coba lagi.");
+      } else if (err.response) {
+        setError(err.response.data?.error || t.error);
+      } else {
+        setError("Terjadi kesalahan tidak terduga. Silakan coba lagi.");
+      }
+      console.error("Add medicine error:", err);
     } finally {
       setSubmitting(false);
     }
