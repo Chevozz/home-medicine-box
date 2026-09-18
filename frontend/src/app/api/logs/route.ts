@@ -6,7 +6,6 @@ import { prisma } from "@/lib/prisma";
 import jwt from "jsonwebtoken";
 import { revalidatePath } from "next/cache";
 
-// Log startup to confirm route handler is loaded
 console.log("[Route Handler] /api/logs route loaded");
 
 export const dynamic = "force-dynamic";
@@ -57,7 +56,6 @@ export async function POST(request: Request) {
   }
 
   try {
-    // Parse body directly without Zod for simplicity
     const body = await request.json();
     console.log("[Route Handler] POST /api/logs body:", body);
 
@@ -100,28 +98,45 @@ export async function POST(request: Request) {
       }
     }
 
-    // Create log
-    const newLog = await prisma.consumptionLog.create({
-      data: {
-        user_id: userId,
-        medicine_id: medicine_id,
-        status: status,
-        schedule_id: finalScheduleId,
-      },
-      include: {
-        medicine: true,
-        schedule: true,
-      },
+    // Use transaction to ensure atomicity: create log + decrement stock (if Taken)
+    const result = await prisma.$transaction(async (tx) => {
+      // 1. Create consumption log
+      const newLog = await tx.consumptionLog.create({
+        data: {
+          user_id: userId,
+          medicine_id: medicine_id,
+          status: status,
+          schedule_id: finalScheduleId,
+        },
+        include: {
+          medicine: true,
+          schedule: true,
+        },
+      });
+
+      // 2. If status is "Taken", decrement stock_quantity atomically
+      if (status === "Taken") {
+        const updatedMedicine = await tx.medicine.update({
+          where: { id: medicine_id },
+          data: {
+            stock_quantity: { decrement: 1 },
+          },
+        });
+        console.log("[Route Handler] Stock decremented:", updatedMedicine.name, "new stock:", updatedMedicine.stock_quantity);
+      }
+
+      return newLog;
     });
 
-    console.log("[Route Handler] Log created:", newLog.id);
+    console.log("[Route Handler] Log created:", result.id);
 
-    // Revalidate caches
+    // Revalidate caches for all affected pages
     revalidatePath("/history");
     revalidatePath("/dashboard");
+    revalidatePath("/medicines");
 
     return NextResponse.json(
-      { success: true, message: "Log recorded", log: newLog },
+      { success: true, message: "Log recorded", log: result },
       { status: 201 }
     );
   } catch (error: any) {
